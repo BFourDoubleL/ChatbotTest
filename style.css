@@ -11,7 +11,7 @@
 body {
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(#EEEEFF, #C8C7FF);
+  background: linear-gradient(#EEEEFF, #2d2afd);
 }
 
 #chatbot-toggler {
@@ -26,7 +26,7 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #f563c4c4;
+  background: #1f23fd;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
 }
@@ -76,7 +76,7 @@ body.show-chatbot .chatbot-popup {
   display: flex;
   align-items: center;
   padding: 15px 22px;
-  background: #f563c4c4;
+  background: #1f23fd;
   justify-content: space-between;
 }
 
@@ -90,7 +90,7 @@ body.show-chatbot .chatbot-popup {
   width: 35px;
   height: 35px;
   padding: 6px;
-  fill: #f78bd6;
+  fill: #1f23fd;
   flex-shrink: 0;
   background: #fff;
   border-radius: 50%;
@@ -125,7 +125,7 @@ body.show-chatbot .chatbot-popup {
   padding: 25px 22px;
   gap: 20px;
   display: flex;
-  height: 460px;
+  height: 250px;
   overflow-y: auto;
   margin-bottom: 82px;
   flex-direction: column;
@@ -153,7 +153,7 @@ body.show-chatbot .chatbot-popup {
   margin-bottom: 2px;
   align-self: flex-end;
   border-radius: 50%;
-  background: #f563c4c4;
+  background: #1f23fd;
 }
 
 .chat-body .message .message-text {
@@ -178,7 +178,7 @@ body.show-chatbot .chatbot-popup {
 
 .chat-body .user-message .message-text {
   color: #fff;
-  background: #5350C4;
+  background: #1f23fd;
   border-radius: 13px 13px 3px 13px;
 }
 
