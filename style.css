@@ -129,7 +129,7 @@ body.show-chatbot .chatbot-popup {
   overflow-y: auto;
   margin-bottom: 82px;
   flex-direction: column;
-  scrollbar-width: thin;
+  scrollbar-width: thick;
   scrollbar-color: #ccccf5 transparent;
 }
 
@@ -262,7 +262,7 @@ body.show-chatbot .chatbot-popup {
   resize: none;
   border: none;
   max-height: 180px;
-  scrollbar-width: thin;
+  scrollbar-width: thick;
   border-radius: inherit;
   font-size: 0.95rem;
   padding: 14px 0 12px 18px;
