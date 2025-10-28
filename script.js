@@ -7,12 +7,15 @@ const fileCancelButton = fileUploadWrapper.querySelector("#file-cancel");
 const chatbotToggler = document.querySelector("#chatbot-toggler");
 const closeChatbot = document.querySelector("#close-chatbot");
 
+// =====================
 // API setup
+// ⚠️ ห้าม push API_KEY จริงขึ้น Git/Github เด็ดขาด
+// ใส่ .env ถ้า deploy backend นะ
+// =====================
 const API_KEY = "AIzaSyDj_mbQ2jvWYp3H85xzwKjFRsOdQ_jG-RM";
 const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=${API_KEY}`;
 
-
-// Initialize user message and file data
+// เก็บสถานะของ user ตอนนี้
 const userData = {
   message: null,
   file: {
@@ -21,14 +24,13 @@ const userData = {
   },
 };
 
-// Store chat history
-const chatHistory = [{
-    role: "model",
-    parts: [{ text: "Testing Chat" }],
-  }];
+// เก็บประวัติแชตที่จะถูกส่งกลับเข้าโมเดลทุกรอบ
+// ต้องเริ่มว่าง แล้วค่อย push user / model ตามลำดับ
+const chatHistory = [];
+
 const initialInputHeight = messageInput.scrollHeight;
 
-// Create message element with dynamic classes and return it
+// helper: สร้าง div ข้อความ
 const createMessageElement = (content, ...classes) => {
   const div = document.createElement("div");
   div.classList.add("message", ...classes);
@@ -36,105 +38,140 @@ const createMessageElement = (content, ...classes) => {
   return div;
 };
 
-// Generate bot response using API
+// helper: ดึงข้อความตอบจาก API ให้ปลอดภัย
+function extractTextFromResponse(data) {
+  try {
+    const parts = data?.candidates?.[0]?.content?.parts;
+    if (!parts || !parts.length) return JSON.stringify(data, null, 2);
+    // ต่อทุก part.text ติดกัน เผื่อมีหลายช่วง
+    return parts
+      .map(p => p.text || "")
+      .join("\n")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .trim();
+  } catch {
+    return JSON.stringify(data, null, 2);
+  }
+}
+
+// เรียก Gemini API
 const generateBotResponse = async (incomingMessageDiv) => {
   const messageElement = incomingMessageDiv.querySelector(".message-text");
 
-  // Add user message to chat history
+  // push user message (พร้อมรูปถ้ามี) เข้า history ก่อนเรียก API
   chatHistory.push({
     role: "user",
-    parts: [{ text: userData.message }, ...(userData.file.data ? [{ inline_data: userData.file }] : [])],
+    parts: [
+      { text: userData.message },
+      ...(userData.file.data
+        ? [{ inline_data: userData.file }]
+        : []),
+    ],
   });
 
-  // API request options
-  const requestOptions = {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: chatHistory,
-    }),
+  // เตรียม payload: contents = บทสนทนาทั้งหมดจนถึงตอนนี้
+  const requestBody = {
+    contents: chatHistory,
   };
 
   try {
-    // Fetch bot response from API
-    const response = await fetch(API_URL, requestOptions);
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+    });
+
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error.message);
+    if (!response.ok) throw new Error(data.error?.message || "API Error");
 
-    // Extract and display bot's response text
-    const apiResponseText = data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, "$1").trim();
-    messageElement.innerText = apiResponseText;
+    // ดึงข้อความตอบ
+    const botText = extractTextFromResponse(data);
 
-    // Add bot response to chat history
+    // แสดงใน UI
+    messageElement.innerText = botText;
+
+    // เก็บคำตอบบอทกลับเข้า history ด้วย
     chatHistory.push({
       role: "model",
-      parts: [{ text: apiResponseText }],
+      parts: [{ text: botText }],
     });
   } catch (error) {
-    // Handle error in API response
     console.log(error);
     messageElement.innerText = error.message;
     messageElement.style.color = "#ff0000";
   } finally {
-    // Reset user's file data, removing thinking indicator and scroll chat to bottom
+    // reset file
     userData.file = {};
     incomingMessageDiv.classList.remove("thinking");
     chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
   }
 };
 
-// Handle outgoing user messages
+// จัดการข้อความขาออก (ฝั่งพี่)
 const handleOutgoingMessage = (e) => {
   e.preventDefault();
+
   userData.message = messageInput.value.trim();
+  if (!userData.message && !userData.file?.data) return; // กันกดส่งว่างๆ
+
   messageInput.value = "";
   messageInput.dispatchEvent(new Event("input"));
+
   fileUploadWrapper.classList.remove("file-uploaded");
 
-  // Create and display user message
-  const messageContent = `<div class="message-text"></div>
-                          ${userData.file.data ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="attachment" />` : ""}`;
+  // DOM ของข้อความฝั่ง user
+  const messageContent = `
+    <div class="message-text"></div>
+    ${
+      userData.file.data
+        ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="attachment" />`
+        : ""
+    }`;
 
   const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
   outgoingMessageDiv.querySelector(".message-text").innerText = userData.message;
   chatBody.appendChild(outgoingMessageDiv);
   chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
 
-  // Simulate bot response with thinking indicator after a delay
+  // สร้าง bubble ตอบของบอท พร้อมจุดกระพริบ
   setTimeout(() => {
-    const messageContent = `
-            <img src="images/Up-ChatLOGO.png" class="chatbot-logo" width="50" height="40" viewBox="0 0 1024 1024" >
-          <div class="message-text">
-            <div class="thinking-indicator">
-              <div class="dot"></div>
-              <div class="dot"></div>
-              <div class="dot"></div>
-            </div>
-          </div>`;
+    const botBubble = `
+      <img src="images/Up-ChatLOGO.png" class="chatbot-logo" width="50" height="40">
+      <div class="message-text">
+        <div class="thinking-indicator">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>`;
 
-    const incomingMessageDiv = createMessageElement(messageContent, "bot-message", "thinking");
+    const incomingMessageDiv = createMessageElement(botBubble, "bot-message", "thinking");
     chatBody.appendChild(incomingMessageDiv);
     chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+
+    // ยิง API
     generateBotResponse(incomingMessageDiv);
   }, 600);
 };
 
-// Adjust input field height dynamically
+// textarea auto-resize
 messageInput.addEventListener("input", () => {
   messageInput.style.height = `${initialInputHeight}px`;
   messageInput.style.height = `${messageInput.scrollHeight}px`;
-  document.querySelector(".chat-form").style.borderRadius = messageInput.scrollHeight > initialInputHeight ? "15px" : "32px";
+
+  document.querySelector(".chat-form").style.borderRadius =
+    messageInput.scrollHeight > initialInputHeight ? "15px" : "32px";
 });
 
-// Handle Enter key press for sending messages
+// Enter = ส่ง (ถ้าไม่ได้กด shift และไม่ได้บนจอเล็ก)
 messageInput.addEventListener("keydown", (e) => {
   const userMessage = e.target.value.trim();
-  if (e.key === "Enter" && !e.shiftKey && userMessage && window.innerWidth > 768) {
+  if (e.key === "Enter" && !e.shiftKey && (userMessage || userData.file?.data) && window.innerWidth > 768) {
     handleOutgoingMessage(e);
   }
 });
 
-// Handle file input change and preview the selected file
+// อัปโหลดไฟล์รูป
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
   if (!file) return;
@@ -144,9 +181,9 @@ fileInput.addEventListener("change", () => {
     fileInput.value = "";
     fileUploadWrapper.querySelector("img").src = e.target.result;
     fileUploadWrapper.classList.add("file-uploaded");
+
     const base64String = e.target.result.split(",")[1];
 
-    // Store file data in userData
     userData.file = {
       data: base64String,
       mime_type: file.type,
@@ -156,13 +193,13 @@ fileInput.addEventListener("change", () => {
   reader.readAsDataURL(file);
 });
 
-// Cancel file upload
+// ยกเลิกไฟล์
 fileCancelButton.addEventListener("click", () => {
   userData.file = {};
   fileUploadWrapper.classList.remove("file-uploaded");
 });
 
-// Initialize emoji picker and handle emoji selection
+// emoji picker
 const picker = new EmojiMart.Picker({
   theme: "light",
   skinTonePosition: "none",
@@ -183,12 +220,8 @@ const picker = new EmojiMart.Picker({
 
 document.querySelector(".chat-form").appendChild(picker);
 
+// ปุ่มกดส่ง / ปุ่มแนบ / ปุ่มปิด-เปิดแชต
 sendMessage.addEventListener("click", (e) => handleOutgoingMessage(e));
 document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
 closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
 chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
-
-
-
-
-
