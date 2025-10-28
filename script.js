@@ -9,7 +9,7 @@ const closeChatbot = document.querySelector("#close-chatbot");
 
 // API setup
 const API_KEY = "AIzaSyDj_mbQ2jvWYp3H85xzwKjFRsOdQ_jG-RM";
-const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
 
 // Initialize user message and file data
@@ -187,6 +187,7 @@ sendMessage.addEventListener("click", (e) => handleOutgoingMessage(e));
 document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
 closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
 chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
+
 
 
 
