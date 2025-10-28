@@ -54,6 +54,15 @@ function extractTextFromResponse(data) {
   }
 }
 
+function typeTextEffect(element, text, speed = 15) {
+  let index = 0;
+  const interval = setInterval(() => {
+    element.textContent += text.charAt(index);
+    index++;
+    if (index >= text.length) clearInterval(interval);
+  }, speed);
+}
+
 // เรียก Gemini API
 const generateBotResponse = async (incomingMessageDiv) => {
   const messageElement = incomingMessageDiv.querySelector(".message-text");
@@ -88,7 +97,8 @@ const generateBotResponse = async (incomingMessageDiv) => {
     const botText = extractTextFromResponse(data);
 
     // แสดงใน UI
-    messageElement.innerText = botText;
+    messageElement.innerText = "";
+typeTextEffect(messageElement, botText, 15);
 
     // เก็บคำตอบบอทกลับเข้า history ด้วย
     chatHistory.push({
@@ -225,4 +235,5 @@ sendMessage.addEventListener("click", (e) => handleOutgoingMessage(e));
 document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
 closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
 chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
+
 
