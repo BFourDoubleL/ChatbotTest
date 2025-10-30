@@ -54,7 +54,7 @@ function extractTextFromResponse(data) {
   }
 }
 
-function typeTextEffect(element, text, speed = 15) {
+function typeTextEffect(element, text, speed = 10) {
   let index = 0;
   const interval = setInterval(() => {
     element.textContent += text.charAt(index);
@@ -235,5 +235,6 @@ sendMessage.addEventListener("click", (e) => handleOutgoingMessage(e));
 document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
 closeChatbot.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
 chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
+
 
 
