@@ -125,7 +125,7 @@ body.show-chatbot .chatbot-popup {
   padding: 25px 22px;
   gap: 20px;
   display: flex;
-  height: 250px;
+  height: 450px;
   overflow-y: auto;
   margin-bottom: 82px;
   flex-direction: column;
@@ -389,3 +389,4 @@ body.show-emoji-picker em-emoji-picker {
     opacity: 0;
   }
 }
+
